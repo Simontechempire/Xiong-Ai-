@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Xiong Ai 2.0 - More Powerful Than ChatGPT</title>
+<meta name="description" content="Xiong Ai - Built in Ikare, Ondo State. Faster, smarter, with memory, file upload, voice, image gen.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>X</text></svg>">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="brand">
+        <div class="brand-logo">X</div>
+        <div class="brand-text"><b>Xiong Ai</b><span>2.0 Pro Max</span></div>
+        <button class="close-sb" id="closeSb">✕</button>
+      </div>
+      <button class="btn-new" id="btnNewChat"><span>+</span> New Chat</button>
+      <button class="btn-new secondary" id="btnNewProject">📁 New Project</button>
+    </div>
+
+    <div class="sb-search">
+      <input id="searchChats" placeholder="🔍 Search chats, projects...">
+    </div>
+
+    <nav class="sb-nav">
+      <div class="nav-section">
+        <p class="nav-label">SUPER TOOLS - Better than ChatGPT</p>
+        <a class="nav-item active" data-tool="chat"><i>💬</i> Chat <span class="pill">∞</span></a>
+        <a class="nav-item" data-tool="images"><i>🖼️</i> Images Gen <span class="pill new">NEW</span></a>
+        <a class="nav-item" data-tool="files"><i>📂</i> File Analyzer <span class="pill">PDF</span></a>
+        <a class="nav-item" data-tool="voice"><i>🎙️</i> Voice Chat <span class="pill">LIVE</span></a>
+        <a class="nav-item" data-tool="code"><i>💻</i> Code Runner <span class="pill">RUN</span></a>
+        <a class="nav-item" data-tool="memory"><i>🧠</i> Memory <span class="pill">100</span></a>
+      </div>
+
+      <div class="nav-section">
+        <p class="nav-label">LIBRARY & PROJECTS</p>
+        <a class="nav-item"><i>📚</i> Library <span class="count">47</span></a>
+        <a class="nav-item"><i>🌐</i> Remote <span class="dot-online"></span></a>
+        <a class="nav-item"><i>⏰</i> Scheduled</a>
+        <a class="nav-item"><i>🧩</i> Plugins <span class="count">12+</span></a>
+      </div>
+
+      <div class="nav-section" id="historySection">
+        <p class="nav-label">RECENT - XIONG AI MEMORY</p>
+        <div id="chatHistoryList">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <p class="nav-label">MY PROJECTS</p>
+        <a class="nav-item small"><span class="proj-dot green"></span> Xiong Ai Core</a>
+        <a class="nav-item small"><span class="proj-dot blue"></span> Crasher MD V2</a>
+        <a class="nav-item small"><span class="proj-dot purple"></span> Ikare Bot Empire</a>
+        <a class="nav-item small"><span class="proj-dot yellow"></span> WhatsApp Unlimited</a>
+      </div>
+    </nav>
+
+    <div class="sb-bottom">
+      <div class="user-panel">
+        <img class="user-avatar" src="https://i.pravatar.cc/100?img=12" alt="user">
+        <div class="user-meta">
+          <b>Ikare Boss</b>
+          <span>Xiong Ai Pro Max • Ikare</span>
+        </div>
+        <button class="settings-btn">⚙️</button>
+      </div>
+      <button class="btn-chat-big">💬 Chat with Xiong Ai</button>
+      <div class="power-badge">⚡ More Powerful Than ChatGPT</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="hamburger" id="openSb">☰</button>
+        <div class="model-switch" id="modelSwitch">
+          <span class="model-name">Xiong Ai 2.0</span>
+          <span class="model-ver">Llama 3.3 70B • Smart</span>
+          <span class="chev">▼</span>
+          <div class="model-dropdown" id="modelDropdown">
+            <div class="model-opt active" data-model="SMART"><b>🧠 Smart - Llama 3.3 70B</b><span>Most powerful, reasoning</span></div>
+            <div class="model-opt" data-model="FAST"><b>⚡ Fast - Llama 3.1 8B</b><span>Instant reply, free</span></div>
+            <div class="model-opt" data-model="VISION"><b>👁️ Vision - Llama 3.2 90B</b><span>See images & files</span></div>
+            <div class="model-opt" data-model="REASONING"><b>🔬 Reasoning - DeepSeek R1</b><span>Think step by step</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="top-right">
+        <button class="icon-btn" title="Upload File" id="topUpload">📎</button>
+        <button class="icon-btn" title="Share">↗️ Share</button>
+        <button class="icon-btn" title="Export">💾</button>
+      </div>
+    </header>
+
+    <section class="chat-area" id="chatArea">
+      <!-- WELCOME -->
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">X</div>
+        <h1>What will you build today, Boss?</h1>
+        <p class="welcome-sub">Xiong Ai is more powerful than ChatGPT - with memory, files, voice, and code runner.</p>
+        
+        <div class="quick-grid">
+          <button class="quick-card" data-prompt="Build me 200 WhatsApp bot commands like Crasher MD with categories"><h4>📜 200 Bot Commands</h4><p>Generate full menu for Baileys bot</p><span>WhatsApp • Crasher MD</span></button>
+          <button class="quick-card" data-prompt="How to bypass WhatsApp group limit and IP ban on Render? Give working code"><h4>🚀 Bypass Group Limit</h4><p>Fix IP ban & group limit issue</p><span>Render • Baileys Fix</span></button>
+          <button class="quick-card" data-prompt="Create a full ChatGPT clone website with streaming, file upload, voice like you did"><h4>🌐 Clone ChatGPT App</h4><p>Make Xiong Ai website/app</p><span>Code • Full Stack</span></button>
+          <button class="quick-card" data-prompt="Write a viral AI drama script for TikTok with twists"><h4>🎭 AI Drama Story</h4><p>Viral TikTok drama prompt</p><span>Story • Viral</span></button>
+        </div>
+
+        <div class="capabilities">
+          <div class="cap"><span>🧠</span><b>Remembers Everything</b><p>Unlike ChatGPT free, I remember your projects</p></div>
+          <div class="cap"><span>📁</span><b>Analyze Files</b><p>Upload PDF, code, images - I understand</p></div>
+          <div class="cap"><span>⚡</span><b>Streaming + Voice</b><p>Real-time typing + speak to me</p></div>
+          <div class="cap"><span>💻</span><b>Code & Deploy</b><p>I write & fix Render, Baileys, Node.js code</p></div>
+        </div>
+      </div>
+
+      <div id="messages"></div>
+
+      <div class="typing" id="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>Xiong Ai is thinking...</span></div>
+    </section>
+
+    <footer class="composer">
+      <div class="composer-bar">
+        <div class="composer-tools">
+          <button class="tool-btn" id="btnAttach" title="Attach File">+ <span>Attach</span></button>
+          <button class="tool-btn" id="btnVoice" title="Voice Input">🎤</button>
+          <button class="tool-btn" id="btnImage" title="Generate Image">🖼️</button>
+          <input type="file" id="fileInput" hidden accept=".pdf,.txt,.js,.json,.html,.css,.md,.py,.java,.cpp">
+        </div>
+        <div class="input-wrap">
+          <textarea id="userInput" placeholder="Ask Xiong Ai anything... (Shift+Enter for new line)" rows="1"></textarea>
+          <button class="send" id="sendBtn" disabled>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="file-preview" id="filePreview"></div>
+      </div>
+      <p class="disclaimer">Xiong Ai 2.0 can make mistakes. Built with ❤️ in Ikare, Ondo State, NG • More powerful than ChatGPT • Groq Llama 3.3 • <a href="/api/status" target="_blank">API Status</a></p>
+    </footer>
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+        </html>
