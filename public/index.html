@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>Xiong Ai 2.0 - Xiong</title>
-<link rel="stylesheet" href="/style.css?v=730&big=chatgpt">
+<title>Xiong Ai 2.0 Titan 741 - Big Like ChatGPT</title>
+<link rel="stylesheet" href="/style.css?v=741&xiong=ai">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -14,81 +14,57 @@
 <div class="app">
 <div class="overlay" id="overlay"></div>
 
-<!-- SIDEBAR - EXACT LIKE IMAGE 2 & 3 -->
 <aside class="sidebar" id="sidebar">
-  <div class="sb-header">
-    <div class="sb-title">ChatGPT</div>
-    <div class="sb-header-actions">
-      <button class="icon-circle" id="btnSearchTop">🔍</button>
-      <button class="icon-circle" id="btnNewTop">💬</button>
-    </div>
-  </div>
-
+  <div class="sb-header"><div class="sb-title">Xiong Ai</div><div class="sb-head-actions"><button class="icon-circle" id="btnSearchTop">🔍</button><button class="icon-circle" id="btnNewTop">💬</button></div></div>
   <div class="sb-search hidden" id="sbSearch"><input id="sbSearchInput" placeholder="Search chats"></div>
-
   <nav class="sb-menu">
-    <a class="sb-item" data-action="images"><i>🖼️</i> Images</a>
-    <a class="sb-item" data-action="library"><i>📚</i> Library</a>
-    <a class="sb-item" data-action="projects"><i>📁</i> Projects</a>
-    <a class="sb-item" data-action="remote"><i>🖥️</i> Remote</a>
-    <a class="sb-item" data-action="scheduled"><i>🕒</i> Scheduled</a>
-    <a class="sb-item" data-action="plugins"><i>🧩</i> Plugins</a>
+    <a class="sb-item" id="sbImages"><span>🖼️</span> Images</a>
+    <a class="sb-item" id="sbLibrary"><span>📚</span> Library</a>
+    <a class="sb-item" id="sbProjects"><span>📁</span> Projects</a>
+    <a class="sb-item" id="sbRemote"><span>🖥️</span> Remote</a>
+    <a class="sb-item" id="sbScheduled"><span>🕒</span> Scheduled</a>
+    <a class="sb-item" id="sbPlugins"><span>🧩</span> Plugins</a>
   </nav>
-
   <div class="sb-divider"></div>
-
-  <div class="sb-history-section">
-    <div class="sb-history-list" id="historyList">
-      <!-- History injected by JS -->
-    </div>
-  </div>
-
-  <div class="sb-bottom">
-    <button class="chat-fab" id="fabNewChat"><i>📝</i> Chat</button>
-    <button class="icon-circle" id="btnSettings">⚙️</button>
-    <button class="voice-fab">🌊</button>
-  </div>
+  <div class="sb-history-section"><div id="historyList" class="sb-history-list"></div></div>
+  <div class="sb-bottom"><button class="chat-fab" id="fabNewChat">📝 Chat</button><button class="icon-circle" id="btnSettings">⚙️</button><button class="icon-circle" id="btnVoiceFab">🌊</button></div>
 </aside>
 
-<!-- MAIN - EXACT LIKE IMAGE 1 -->
 <main class="main">
   <header class="topbar">
-    <div class="tb-left">
-      <button class="hamburger" id="menuBtn"><span></span><span class="dot"></span></button>
-      <button class="get-plus">✦ Get Plus</button>
-    </div>
-    <div class="tb-right">
-      <button class="icon-circle" id="btnRefresh">↻</button>
-    </div>
+    <div class="tb-left"><button class="hamburger" id="menuBtn"><span></span><span></span><span class="dot"></span></button><button class="get-plus" id="getPlusBtn">✦ Get Plus</button></div>
+    <div class="tb-right"><button class="icon-circle" id="btnRefresh">↻</button></div>
   </header>
 
   <section class="center-area" id="chatArea">
-    <div class="welcome" id="welcome">
-      <div class="spacer"></div>
-      <div class="actions-list" id="actionsList">
-        <button class="action-row" data-prompt="Create an image of Xiong Ai Titan robot in Ikare"><i>🖼️</i> Create an image</button>
-        <button class="action-row" data-prompt="Write or edit my WhatsApp bot menu with 200 commands like Wolf XMD"><i>✏️</i> Write or edit</button>
-        <button class="action-row" data-prompt="Search the web for latest Groq Llama models 2026"><i>🌐</i> Search the web</button>
-      </div>
-      <div class="spacer small"></div>
+    <div class="welcome" id="welcome"><div class="spacer"></div>
+      <div class="actions-list">
+        <button class="action-row" id="actImage"><span>🖼️</span> Create an image</button>
+        <button class="action-row" id="actWrite"><span>✏️</span> Write or edit</button>
+        <button class="action-row" id="actSearch"><span>🌐</span> Search the web</button>
+      </div><div class="spacer small"></div>
     </div>
     <div class="messages" id="messages"></div>
-    <div class="typing" id="typing"><div class="dots"><span></span><span></span><span></span></div><span>Xiong Ai is thinking... Ikare</span></div>
+    <div class="typing" id="typing"><div class="dots"><span></span><span></span><span></span></div><span>Xiong Ai is thinking... from Ikare</span></div>
   </section>
 
   <footer class="composer-area">
     <div class="composer">
-      <button class="c-plus" id="plusBtn">+</button>
-      <input type="file" id="fileInput" hidden accept=".pdf,.txt,.js,.json,.md,.png,.jpg,.jpeg,.py">
-      <input type="text" id="userInput" placeholder="Ask ChatGPT" autocomplete="off">
-      <button class="c-mic" id="micBtn">🎤</button>
-      <button class="c-send" id="sendBtn"><span class="wave">🌊</span></button>
+      <button class="c-plus" id="plusBtn" type="button">+</button>
+      <input type="file" id="fileInput" hidden accept=".pdf,.txt,.js,.json,.md,.png,.jpg,.jpeg,.py,.docx">
+      <input type="text" id="userInput" placeholder="Ask Xiong Ai" autocomplete="off">
+      <button class="c-mic" id="micBtn" type="button">🎤</button>
+      <button class="c-send" id="sendBtn" type="button"><span>➤</span></button>
     </div>
-    <div class="composer-foot">Xiong Ai can make mistakes. Verify info. Built in Ikare 🇳🇬 <a href="/api/status">Status 🟢</a></div>
+    <div class="composer-foot">Xiong Ai can make mistakes. Verify info. Built in Ikare, Ondo State 🇳🇬 <a href="/api/status" target="_blank">Status 🟢</a></div>
   </footer>
 </main>
 </div>
+
+<!-- Get Plus Modal - CHANGED TO XIONG AI -->
+<div class="modal hidden" id="plusModal"><div class="modal-box"><div class="modal-header"><h3>✦ Xiong Ai Plus</h3><button id="closePlus">✕</button></div><div class="modal-body"><p>✅ 710+ features - More powerful than ChatGPT</p><p>✅ Fast Groq Llama 3.3 70B unlimited - Xiong Ai Titan</p><p>✅ Image Gen + File Analyze + Voice Note - Xiong Ai</p><p>✅ Built in Ikare, Ondo State 🇳🇬 - Ikare Tech Inc</p><button class="modal-upgrade">Upgrade Xiong Ai Plus ₦2000/mo</button></div></div></div>
+
 <div class="toast" id="toast"></div>
-<script src="/app.js?v=730&big=chatgpt"></script>
+<script src="/app.js?v=741&xiong=ai"></script>
 </body>
-</html>
+  </html>
