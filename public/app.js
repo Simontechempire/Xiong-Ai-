@@ -1,233 +1,380 @@
-/* XIONG AI 2.0 - MORE POWERFUL THAN CHATGPT - FULL LOGIC */
-const $ = s=>document.querySelector(s);
+/* XIONG AI 2.0 - CHATGPT CLONE - VERY LONG - TITAN 710 - FIXED EMPTY BUBBLE - IKARE TECH INC */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const sidebar = $('#sidebar');
+const overlay = $('#overlay');
+const menuBtn = $('#menuBtn');
+const historyList = $('#historyList');
 const chatArea = $('#chatArea');
 const messagesEl = $('#messages');
 const userInput = $('#userInput');
 const sendBtn = $('#sendBtn');
-const welcome = $('#welcome');
-const typing = $('#typing');
-const historyList = $('#chatHistoryList');
-const modelSwitch = $('#modelSwitch');
-const modelDropdown = $('#modelDropdown');
-const openSb = $('#openSb');
-const closeSb = $('#closeSb');
-const sidebar = $('#sidebar');
+const welcomeEl = $('#welcome');
+const typingEl = $('#typing');
 const fileInput = $('#fileInput');
-const btnAttach = $('#btnAttach');
-const btnVoice = $('#btnVoice');
-const btnImage = $('#btnImage');
-const topUpload = $('#topUpload');
-const filePreview = $('#filePreview');
-const searchChats = $('#searchChats');
+const plusBtn = $('#plusBtn');
+const micBtn = $('#micBtn');
+const modelPill = $('#modelPill');
+const modelDropdown = $('#modelDropdown');
+const modelNameEl = $('#modelName');
+const toastEl = $('#toast');
+const sbSearchBox = $('#sbSearchBox');
+const sbSearchInput = $('#sbSearchInput');
 
 let currentModel = localStorage.getItem('xiong_model') || 'SMART';
-let chatHistory = JSON.parse(localStorage.getItem('xiong_ai_v2_history')||'[]');
-let currentChat = JSON.parse(localStorage.getItem('xiong_current')||'[]');
-let attachedFiles = [];
+let chatHistory = JSON.parse(localStorage.getItem('xiong_ai_v2_history') || '[]');
+let currentChat = JSON.parse(localStorage.getItem('xiong_current') || '[]');
 let isGenerating = false;
 let recognition = null;
+let attachedFiles = [];
+let modelMap = {
+  SMART: 'SMART • Llama 3.3 70B',
+  FAST: 'FAST • Llama 3.1 8B',
+  VISION: 'VISION • Llama 3.2 90B',
+  REASONING: 'REASONING • Deep Think'
+};
 
-// INIT
-function init(){
-  renderHistory();
-  if(currentChat.length){ welcome.style.display='none'; currentChat.forEach(m=> addMsg(m.role,m.content,false)); }
+function initApp(){
   updateModelUI();
-  autoResize();
-  initVoice();
-  console.log('%c XIONG AI 2.0 - More Powerful Than ChatGPT - Ikare ','background:black;color:#3b82f6;padding:10px;font-weight:900');
+  renderHistory();
+  setupAutoResize();
+  setupVoice();
+  if(currentChat.length){
+    welcomeEl.style.display='none';
+    currentChat.forEach(m=> renderMessage(m.role, m.content, false));
+  }
+  checkGroqStatus();
+  console.log('%c⚡ Xiong Ai 2.0 Titan 710 - Ikare Tech Inc - More Powerful Than ChatGPT', 'color:#3b82f6;font-size:18px;font-weight:800');
 }
-init();
+initApp();
 
 function updateModelUI(){
-  const map={SMART:'🧠 Smart • Llama 3.3 70B',FAST:'⚡ Fast • Llama 3.1 8B',VISION:'👁️ Vision • 90B',REASONING:'🔬 Reasoning • R1'};
-  $('.model-name').textContent = map[currentModel]||map.SMART;
-  document.querySelectorAll('.model-opt').forEach(o=> o.classList.toggle('active', o.dataset.model===currentModel));
+  modelNameEl.textContent = modelMap[currentModel] || modelMap.SMART;
+  $$('.md-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.model===currentModel);
+  });
 }
 
-function autoResize(){
-  userInput.addEventListener('input',()=>{
+function toast(msg, ms=2500){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=> toastEl.classList.remove('show'), ms);
+}
+
+async function checkGroqStatus(){
+  try{
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    if(!d.groq_key_set){
+      toast('⚠️ GROQ_API_KEY not set in Render Environment - Go to Render Dashboard -> Environment -> Add Key');
+    }
+  }catch{}
+}
+
+function setupAutoResize(){
+  userInput.addEventListener('input', ()=>{
     userInput.style.height='auto';
-    userInput.style.height = Math.min(userInput.scrollHeight,160)+'px';
+    const h = Math.min(userInput.scrollHeight, 140);
+    userInput.style.height = h+'px';
     sendBtn.disabled = !userInput.value.trim() && attachedFiles.length===0;
   });
 }
 
+function setupVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ micBtn.style.opacity='0.3'; micBtn.title='Voice not supported'; return; }
+  recognition = new SR();
+  recognition.lang='en-US';
+  recognition.interimResults=false;
+  recognition.continuous=false;
+  recognition.onstart=()=>{ micBtn.textContent='🔴'; toast('🎤 Listening... Speak English/Pidgin/Yoruba'); };
+  recognition.onend=()=>{ micBtn.textContent='🎤'; };
+  recognition.onerror=(e)=>{ micBtn.textContent='🎤'; toast('Voice error: '+e.error); };
+  recognition.onresult=(e)=>{
+    const transcript = e.results[0][0].transcript;
+    userInput.value = transcript;
+    userInput.dispatchEvent(new Event('input'));
+    toast('Heard: '+transcript.slice(0,50));
+  };
+}
+
 function renderHistory(){
-  const q = (searchChats.value||'').toLowerCase();
-  const filtered = chatHistory.filter(h=> h.title.toLowerCase().includes(q));
-  historyList.innerHTML = filtered.slice(0,20).map((h,i)=> `
-    <div class="nav-item small" data-idx="${i}" title="${h.title}">
-      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${h.title}</span>
-      <span style="font-size:10px;color:var(--muted2)">${new Date(h.date).toLocaleDateString()}</span>
-    </div>
-  `).join('') || '<div class="nav-item small" style="opacity:.5">No chats yet</div>';
-  historyList.querySelectorAll('.nav-item').forEach(el=>{
-    el.addEventListener('click',()=>{
-      const idx = el.dataset.idx; if(idx===undefined) return;
-      const item = chatHistory[idx];
-      messagesEl.innerHTML=''; welcome.style.display='none';
-      currentChat = item.chat || []; localStorage.setItem('xiong_current', JSON.stringify(currentChat));
-      currentChat.forEach(m=> addMsg(m.role,m.content,false));
+  const query = (sbSearchInput.value||'').toLowerCase();
+  let filtered = chatHistory;
+  if(query) filtered = chatHistory.filter(h=> h.title.toLowerCase().includes(query) || (h.chat||[]).some(m=> m.content.toLowerCase().includes(query)));
+  if(filtered.length===0){
+    historyList.innerHTML = '<div class="h-item" style="opacity:.4">No chats found - Start new chat with Xiong Ai</div>';
+    return;
+  }
+  historyList.innerHTML = filtered.slice(0,80).map((h,idx)=>{
+    const realIdx = chatHistory.indexOf(h);
+    return `<div class="h-item" data-idx="${realIdx}" title="${h.title}">${escapeHtml(h.title.slice(0,60))}</div>`;
+  }).join('');
+  historyList.querySelectorAll('.h-item').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const i = parseInt(el.dataset.idx);
+      if(isNaN(i)) return;
+      const item = chatHistory[i];
+      if(!item) return;
+      messagesEl.innerHTML='';
+      welcomeEl.style.display='none';
+      currentChat = item.chat || [];
+      localStorage.setItem('xiong_current', JSON.stringify(currentChat));
+      currentChat.forEach(m=> renderMessage(m.role, m.content, false));
+      closeSidebar();
+      toast('Loaded: '+item.title.slice(0,40));
     });
   });
 }
-searchChats.addEventListener('input', renderHistory);
 
-// MODEL SWITCH
-modelSwitch.addEventListener('click',()=> modelDropdown.classList.toggle('open'));
-document.addEventListener('click',e=>{ if(!modelSwitch.contains(e.target)) modelDropdown.classList.remove('open'); });
-modelDropdown.querySelectorAll('.model-opt').forEach(opt=>{
-  opt.addEventListener('click',()=>{
-    currentModel = opt.dataset.model; localStorage.setItem('xiong_model', currentModel);
-    updateModelUI(); modelDropdown.classList.remove('open');
-  });
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// SIDEBAR LOGIC
+menuBtn.addEventListener('click', openSidebar);
+overlay.addEventListener('click', closeSidebar);
+function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); document.body.style.overflow='hidden'; }
+function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); document.body.style.overflow=''; modelDropdown.classList.add('hidden'); }
+$('#btnNew').addEventListener('click', startNewChat);
+$('#btnNewChatTop').addEventListener('click', startNewChat);
+function startNewChat(){
+  messagesEl.innerHTML='';
+  currentChat=[];
+  localStorage.removeItem('xiong_current');
+  welcomeEl.style.display='flex';
+  closeSidebar();
+  toast('New chat started - Xiong Ai ready from Ikare');
+  userInput.focus();
+}
+$('#btnSearch').addEventListener('click', ()=>{
+  sbSearchBox.classList.toggle('hidden');
+  if(!sbSearchBox.classList.contains('hidden')) sbSearchInput.focus();
+});
+sbSearchInput.addEventListener('input', renderHistory);
+$('#btnShare').addEventListener('click', ()=>{
+  const text = currentChat.map(m=> `${m.role}: ${m.content}`).join('\n\n');
+  if(!text){ toast('No chat to share'); return; }
+  navigator.clipboard.writeText(text).then(()=> toast('Chat copied to clipboard'));
 });
 
-// SIDEBAR
-openSb.addEventListener('click',()=> sidebar.classList.add('open'));
-closeSb.addEventListener('click',()=> sidebar.classList.remove('open'));
-
-// NEW CHAT
-$('#btnNewChat').addEventListener('click',()=>{
-  messagesEl.innerHTML=''; currentChat=[]; localStorage.removeItem('xiong_current');
-  welcome.style.display='flex'; sidebar.classList.remove('open');
+// MODEL DROPDOWN
+modelPill.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  modelDropdown.classList.toggle('hidden');
+});
+document.addEventListener('click', ()=> modelDropdown.classList.add('hidden'));
+$$('.md-item').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    currentModel = el.dataset.model;
+    localStorage.setItem('xiong_model', currentModel);
+    updateModelUI();
+    modelDropdown.classList.add('hidden');
+    toast('Model: '+modelMap[currentModel]);
+  });
 });
 
 // FILE UPLOAD
-btnAttach.addEventListener('click',()=> fileInput.click());
-topUpload.addEventListener('click',()=> fileInput.click());
+plusBtn.addEventListener('click', ()=> fileInput.click());
 fileInput.addEventListener('change', async e=>{
-  const file = e.target.files[0]; if(!file) return;
-  const chip = document.createElement('div'); chip.className='file-chip';
-  chip.innerHTML=`📄 ${file.name} (${(file.size/1024).toFixed(1)}KB) <span style="cursor:pointer">✕</span>`;
-  filePreview.classList.add('show'); filePreview.appendChild(chip);
-  attachedFiles.push(file.name);
-
-  // Upload to server
-  const fd = new FormData(); fd.append('file', file);
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 10*1024*1024){ toast('File too big >10MB'); return; }
+  toast('📁 Reading file: '+file.name);
   try{
-    const res = await fetch('/upload',{method:'POST',body:fd});
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch('/upload', { method:'POST', body: form });
     const data = await res.json();
-    attachedFiles[attachedFiles.length-1] = `${file.name}: ${data.text.slice(0,500)}`;
-    chip.innerHTML+=`<span style="color:#10b981"> ✓ Analyzed</span>`;
-  }catch{ chip.innerHTML+=`<span style="color:#ef4444"> failed</span>`; }
-  chip.querySelector('span').onclick=()=>{ chip.remove(); attachedFiles=[]; if(!filePreview.children.length) filePreview.classList.remove('show'); };
-  sendBtn.disabled=false;
+    if(data.error) throw new Error(data.error);
+    attachedFiles = [{ name: file.name, content: data.content || data.text || 'File uploaded' }];
+    userInput.value = `[File: ${file.name}]\n${data.content ? data.content.slice(0,2000) : ''}\n\nQuestion about this file: `;
+    userInput.dispatchEvent(new Event('input'));
+    toast('✅ File analyzed: '+file.name);
+  }catch(err){
+    toast('Upload failed: '+err.message);
+    userInput.value = `[File: ${file.name}] - Ask about this file`;
+    userInput.dispatchEvent(new Event('input'));
+  }
 });
 
-// VOICE
-function initVoice(){
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SpeechRecognition){ btnVoice.style.display='none'; return; }
-  recognition = new SpeechRecognition(); recognition.continuous=false; recognition.lang='en-US';
-  recognition.onstart=()=>{ btnVoice.classList.add('recording'); btnVoice.textContent='🔴 Listening...'; };
-  recognition.onend=()=>{ btnVoice.classList.remove('recording'); btnVoice.innerHTML='🎤'; };
-  recognition.onresult=(e)=>{ userInput.value = e.results[0][0].transcript; userInput.dispatchEvent(new Event('input')); sendMessage(); };
-}
-btnVoice.addEventListener('click',()=>{ if(!recognition) return; try{ recognition.start(); }catch{} });
-
-// IMAGE GEN
-btnImage.addEventListener('click',()=>{
-  const prompt = prompt('🖼️ Xiong Ai Image Gen - Enter prompt:','Ultra realistic portrait of Xiong Ai robot, Ikare, Nigeria, cinematic 8k');
-  if(!prompt) return;
-  sendMessage(`Generate image: ${prompt}. Give me enhanced prompt and direct link using pollinations.ai`);
+// VOICE BUTTON
+micBtn.addEventListener('click', ()=>{
+  if(!recognition){ toast('Voice not supported on this browser - Use Chrome'); return; }
+  try{ recognition.start(); }catch(err){ toast('Voice already listening'); }
 });
 
-// CORE SEND WITH STREAMING - MORE POWERFUL THAN CHATGPT
+// WELCOME BUTTONS
+$$('.wa-btn, .wc').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const prompt = btn.dataset.prompt;
+    if(prompt) sendMessage(prompt);
+  });
+});
+
+// CORE SEND - FIXED EMPTY BUBBLE - NEVER RETURNS EMPTY
 async function sendMessage(overrideText){
-  const text = overrideText || userInput.value.trim();
+  const text = (overrideText || userInput.value.trim());
   if(!text || isGenerating) return;
 
-  welcome.style.display='none';
-  addMsg('user', text);
-  currentChat.push({role:'user', content:text});
+  welcomeEl.style.display='none';
+  renderMessage('user', text, true);
+  currentChat.push({ role:'user', content: text });
   localStorage.setItem('xiong_current', JSON.stringify(currentChat));
-  userInput.value=''; userInput.style.height='auto'; sendBtn.disabled=true;
-  filePreview.innerHTML=''; filePreview.classList.remove('show');
+  userInput.value='';
+  userInput.style.height='auto';
+  sendBtn.disabled=true;
+  isGenerating=true;
+  typingEl.classList.add('show');
+  chatArea.scrollTop = chatArea.scrollHeight;
 
-  isGenerating=true; typing.classList.add('show'); chatArea.scrollTop = chatArea.scrollHeight;
-
-  // Create AI message placeholder for streaming
-  const aiDiv = document.createElement('div'); aiDiv.className='msg ai';
-  aiDiv.innerHTML=`<div class="msg-avatar">X</div><div class="msg-bubble" id="streamingBubble"><span class="cursor">▌</span></div>`;
-  messagesEl.appendChild(aiDiv);
-  const bubble = aiDiv.querySelector('#streamingBubble');
-  let fullText='';
+  const aiWrapper = document.createElement('div');
+  aiWrapper.className='msg ai';
+  aiWrapper.innerHTML=`<div class="avatar">X</div><div class="bubble" id="liveBubble"><span class="stream-cursor">▌</span> Xiong Ai thinking from Ikare...</div>`;
+  messagesEl.appendChild(aiWrapper);
+  const bubble = aiWrapper.querySelector('#liveBubble');
+  let fullReply='';
 
   try{
-    const res = await fetch('/chat',{
+    const payload = {
+      message: text,
+      history: currentChat.slice(0,-1),
+      modelType: currentModel,
+      stream: true,
+      files: attachedFiles
+    };
+
+    const res = await fetch('/chat', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: text, history: currentChat.slice(0,-1), modelType: currentModel, stream: true, files: attachedFiles })
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
     });
 
-    if(!res.body){ throw new Error('No stream'); }
+    if(!res.ok){
+      let errJson = {};
+      try{ errJson = await res.json(); }catch{}
+      throw new Error(errJson.reply || errJson.error || `Server error ${res.status} - Check Render logs`);
+    }
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer='';
-
-    while(true){
-      const {done,value} = await reader.read(); if(done) break;
-      buffer+=decoder.decode(value,{stream:true});
-      const lines = buffer.split('\n\n'); buffer = lines.pop()||'';
-      for(const line of lines){
-        if(!line.startsWith('data:')) continue;
-        try{
-          const data = JSON.parse(line.slice(5).trim());
-          if(data.content){ fullText+=data.content; bubble.innerHTML = marked.parse(fullText) + '<span class="cursor">▌</span>'; chatArea.scrollTop=chatArea.scrollHeight; }
-          if(data.done){ fullText = data.fullReply||fullText; }
-        }catch{}
+    const contentType = res.headers.get('content-type') || '';
+    if(contentType.includes('application/json')){
+      const data = await res.json();
+      fullReply = data.reply || data.fullReply || '';
+      if(!fullReply) throw new Error('Empty JSON reply - Check GROQ_API_KEY');
+      bubble.innerHTML = marked.parse(fullReply);
+    } else {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer='';
+      while(true){
+        const {done, value} = await reader.read();
+        if(done) break;
+        buffer += decoder.decode(value, {stream:true});
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+        for(const part of parts){
+          if(!part.startsWith('data:')) continue;
+          const jsonStr = part.slice(5).trim();
+          if(!jsonStr) continue;
+          try{
+            const data = JSON.parse(jsonStr);
+            if(data.content){
+              fullReply += data.content;
+              bubble.innerHTML = marked.parse(fullReply) + '<span class="stream-cursor">▌</span>';
+              chatArea.scrollTop = chatArea.scrollHeight;
+            }
+            if(data.done && data.fullReply){
+              fullReply = data.fullReply;
+            }
+            if(data.error){
+              throw new Error(data.error);
+            }
+          }catch(e){
+            if(e.message && e.message.includes('Server error')) throw e;
+          }
+        }
       }
     }
 
-    typing.classList.remove('show');
-    bubble.innerHTML = marked.parse(fullText) + `<div class="msg-actions"><button onclick="copyMsg(this)">📋 Copy</button><button onclick="speakMsg(this)">🔊 Speak</button><button onclick="regenerate()">🔄 Regenerate</button><button onclick="shareMsg(this)">↗️ Share</button></div>`;
-    bubble.querySelectorAll('pre code').forEach(b=> hljs.highlightElement(b));
-    currentChat.push({role:'assistant', content:fullText});
-    localStorage.setItem('xiong_current', JSON.stringify(currentChat));
+    if(!fullReply.trim()){
+      throw new Error('Empty response - Groq API key invalid or model deprecated. Go to Render -> Environment -> Add GROQ_API_KEY = gsk_... and use SMART model');
+    }
 
-    // Save to history
-    chatHistory.unshift({ title: text.slice(0,60), date: new Date().toISOString(), chat: [...currentChat], model: currentModel });
-    if(chatHistory.length>50) chatHistory.pop();
+    typingEl.classList.remove('show');
+    bubble.innerHTML = marked.parse(fullReply) + `
+      <div class="msg-actions">
+        <button data-act="copy">📋 Copy</button>
+        <button data-act="speak">🔊 Speak</button>
+        <button data-act="regen">🔄 Regenerate</button>
+        <button data-act="share">↗️ Share</button>
+      </div>
+    `;
+    bubble.querySelectorAll('pre code').forEach(block=>{ try{ hljs.highlightElement(block); }catch{} });
+    bubble.querySelectorAll('[data-act]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const act = btn.dataset.act;
+        if(act==='copy'){ navigator.clipboard.writeText(fullReply).then(()=> toast('Copied')); }
+        if(act==='speak'){ const u = new SpeechSynthesisUtterance(fullReply.slice(0,300)); u.lang='en-US'; speechSynthesis.speak(u); toast('🔊 Speaking...'); }
+        if(act==='regen'){ messagesEl.removeChild(aiWrapper); currentChat.pop(); sendMessage(text); }
+        if(act==='share'){ navigator.clipboard.writeText(fullReply).then(()=> toast('Shared - Copied')); }
+      });
+    });
+
+    currentChat.push({ role:'assistant', content: fullReply });
+    localStorage.setItem('xiong_current', JSON.stringify(currentChat));
+    chatHistory.unshift({ title: text.slice(0,70), date: new Date().toISOString(), chat: [...currentChat], model: currentModel });
+    if(chatHistory.length>100) chatHistory.pop();
     localStorage.setItem('xiong_ai_v2_history', JSON.stringify(chatHistory));
     renderHistory();
     attachedFiles=[];
 
   }catch(err){
-    typing.classList.remove('show');
-    bubble.innerHTML=`⚠️ Xiong Ai Error: ${err.message}<br><br>Check your GROQ_API_KEY in .env or Render env. Free plan rate limit = wait 30s.<br><button onclick="location.reload()">Retry</button>`;
-    console.error(err);
+    typingEl.classList.remove('show');
+    console.error('Xiong Ai Error:', err);
+    bubble.innerHTML = `
+      <div style="color:#f87171;border:1px solid #7f1d1d;background:#1a0f0f;padding:14px;border-radius:12px">
+        <b>⚠️ Xiong Ai Error - Not Replying Fix:</b><br><br>
+        <code style="font-size:12px;white-space:pre-wrap">${escapeHtml(err.message)}</code><br><br>
+        <b>✅ Fix Steps - Ikare Tech:</b><br>
+        1. Go to <b>Render Dashboard -> xiong-ai -> Environment</b><br>
+        2. Add Variable: <code>GROQ_API_KEY = gsk_your_real_key</code> (starts with gsk_)<br>
+        3. Save -> <b>Manual Deploy -> Clear build cache & deploy</b><br>
+        4. Wait 2 mins -> Open <code>/api/status</code> - must show groq_key_set: true<br>
+        5. On site, select <b>SMART model</b> not REASONING (R1 deprecated)<br>
+        6. Hard refresh: Ctrl+Shift+R<br><br>
+        <small>If still fails, check Render Logs for error. Your Groq free quota may be 429 rate limited - wait 60s.</small>
+      </div>
+    `;
+    toast('Error: '+err.message.slice(0,80));
   }
+
   isGenerating=false;
+  sendBtn.disabled=false;
+  chatArea.scrollTop = chatArea.scrollHeight;
+  userInput.focus();
 }
 
-function addMsg(role, content, save=true){
-  const div = document.createElement('div'); div.className=`msg ${role==='user'?'user':'ai'}`;
-  const avatar = role==='user'?'O':'X';
-  let html = role==='user' ? content.replace(/\n/g,'<br>') : marked.parse(content);
-  div.innerHTML=`<div class="msg-avatar">${avatar}</div><div class="msg-bubble">${html}${role==='ai'?`<div class="msg-actions"><button onclick="copyMsg(this)">📋 Copy</button><button onclick="speakMsg(this)">🔊 Speak</button></div>`:''}</div>`;
+function renderMessage(role, content, isNew=true){
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  if(role==='user'){
+    div.innerHTML = `<div class="bubble">${escapeHtml(content)}</div>`;
+  } else {
+    div.innerHTML = `<div class="avatar">X</div><div class="bubble">${marked.parse(content)}</div>`;
+    setTimeout(()=>{ div.querySelectorAll('pre code').forEach(b=>{ try{ hljs.highlightElement(b);}catch{} }); }, 50);
+  }
   messagesEl.appendChild(div);
-  setTimeout(()=>{ div.querySelectorAll('pre code').forEach(b=> hljs.highlightElement(b)); chatArea.scrollTop=chatArea.scrollHeight; },50);
+  if(isNew) chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-// HELPERS
-window.copyMsg = (btn)=>{
-  const txt = btn.closest('.msg-bubble').innerText; navigator.clipboard.writeText(txt);
-  btn.textContent='✅ Copied'; setTimeout(()=>btn.textContent='📋 Copy',2000);
-};
-window.speakMsg = (btn)=>{
-  const txt = btn.closest('.msg-bubble').innerText.slice(0,500);
-  const utter = new SpeechSynthesisUtterance(txt); utter.rate=1; speechSynthesis.speak(utter);
-};
-window.shareMsg = (btn)=>{ const txt=btn.closest('.msg-bubble').innerText; if(navigator.share) navigator.share({title:'Xiong Ai',text:txt}); else copyMsg(btn); };
-window.regenerate = ()=>{ if(currentChat.length<2) return; const lastUser = [...currentChat].reverse().find(m=>m.role==='user'); if(lastUser) sendMessage(lastUser.content); };
+sendBtn.addEventListener('click', ()=> sendMessage());
+userInput.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendMessage();
+  }
+});
 
-// EVENTS
-sendBtn.addEventListener('click',()=> sendMessage());
-userInput.addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
-document.querySelectorAll('.quick-card').forEach(c=> c.addEventListener('click',()=> sendMessage(c.dataset.prompt)));
-document.addEventListener('keydown',e=>{ if(e.key==='/' && document.activeElement!==userInput){ e.preventDefault(); userInput.focus(); } });
-
-// PWA install prompt
-let deferredPrompt; window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible'){
+    renderHistory();
+  }
+});
